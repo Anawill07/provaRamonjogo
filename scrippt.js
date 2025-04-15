@@ -1,71 +1,127 @@
 const canvas = document.getElementById('jogoCanvas');
 const ctx = canvas.getContext('2d');
 
+// Controles
+let teclaEsquerdaPressionada = false;
+let teclaDireitaPressionada = false;
 
-class Entidade{
-    #x;
-    #y;
-    constructor(x,y,largura,altura,cor){
-        this.x = x,
-        this.y = y,
-        this.largura = largura,
-        this.altura = altura,
-        this.cor = cor
-    }
-    desenhar(){
-        ctx.fillStyle = this.cor
-        ctx.fillRect(this.x, this.y, this.largura, this.altura)
-    }
-    get x() {
-        return this.#x;
-    }
-    set x(valor) {
-        this.#x = valor;
-    }
-    get y() {
-        return this.#y;
-    }
-    set y(valor) {
-        this.#y = valor;
-    }
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyA') teclaEsquerdaPressionada = true;
+  if (e.code === 'KeyD') teclaDireitaPressionada = true;
+});
+
+document.addEventListener('keyup', (e) => {
+  if (e.code === 'KeyA') teclaEsquerdaPressionada = false;
+  if (e.code === 'KeyD') teclaDireitaPressionada = false;
+});
+
+class Entidade {
+  #x;
+  #y;
+
+  constructor(x, y, largura, altura, cor) {
+    this.x = x;
+    this.y = y;
+    this.largura = largura;
+    this.altura = altura;
+    this.cor = cor;
+  }
+
+  desenhar() {
+    ctx.fillStyle = this.cor;
+    ctx.fillRect(this.x, this.y, this.largura, this.altura);
+  }
+
+  get x() {
+    return this.#x;
+  }
+
+  set x(valor) {
+    this.#x = valor;
+  }
+
+  get y() {
+    return this.#y;
+  }
+
+  set y(valor) {
+    this.#y = valor;
+  }
 }
 
-class Personagem extends Entidade {
-    #velocidade_y;
-    constructor(x, y, largura, altura, cor) {
-        super(x, y, largura, altura, cor);
-        this.#velocidade_y = 0;
-        this.pulando = false;
-        this.imagem = new Image();
-        this.imagem.src = './image.jpg';
+class Jogador extends Entidade {
+  #velocidade_x;
+
+  constructor(x, y, largura, altura, cor) {
+    super(x, y, largura, altura, cor);
+    this.#velocidade_x = 5;
+  }
+
+  moverEsquerda() {
+    this.x -= this.#velocidade_x;
+    if (this.x < 0) this.x = 0;
+  }
+
+  moverDireita() {
+    this.x += this.#velocidade_x;
+    if (this.x + this.largura > canvas.width) {
+      this.x = canvas.width - this.largura;
     }
-    
-    atualizar() {
-        if (this.pulando) {
-            this.y -= this.#velocidade_y;
-            this.#velocidade_y -= Jogo.gravidade;
-            if (this.y >= canvas.height - 50) {
-                this.#velocidade_y = 0;
-                this.y = canvas.height - 50;
-                this.pulando = false;
-            }
-        }
-    }
+  }
+
+  atualizar() {
+    if (teclaEsquerdaPressionada) this.moverEsquerda();
+    if (teclaDireitaPressionada) this.moverDireita();
+  }
 }
 
-const objeto_na_tela = new Entidade(50,50,50,50,'black')
+class Jogo {
+  constructor() {
+    this.jogador = new Jogador(180, canvas.height - 60, 40, 40, 'black');
+    this.ets = this.criarETs();
+  }
 
-
-
-function loop(){
-    ctx.clearRect(0,0,canvas.width, canvas.height)
-    objeto_na_tela.desenhar()
-    //inserir as funções de desenhar, atualizar, colisão aqui
-    requestAnimationFrame(loop)
-    if (!Jogo.gameOver) {
-        requestAnimationFrame(this.loop);
+  criarETs() {
+    const ets = [];
+    for (let i = 0; i < 4; i++) {
+      ets.push(new Entidade(20 + i * 90, 20, 60, 40, 'green'));
     }
+    return ets;
+  }
+
+  desenharETs() {
+    ctx.fillStyle = 'white';
+    this.ets.forEach(et => {
+      et.desenhar();
+      ctx.fillStyle = 'white';
+      ctx.font = '16px Arial';
+      ctx.fillText('', et.x + 15, et.y + 25);
+    });
+  }
+
+  atualizar() {
+    this.jogador.atualizar();
+  }
+
+  desenhar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    this.jogador.desenhar();
+    this.desenharETs();
+  }
+
+  loop() {
+    this.atualizar();
+    this.desenhar();
+    requestAnimationFrame(() => this.loop());
+  }
+
+  iniciar() {
+    this.loop();
+  }
 }
-loop()
+
+// Iniciar o jogo
+const jogo = new Jogo();
+jogo.iniciar();
 
 
